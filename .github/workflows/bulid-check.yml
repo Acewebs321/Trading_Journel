@@ -1,21 +1,29 @@
-name: Docker Build Verification
+name: Docker Build & Deploy
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
     - name: Verify Docker build
-      run: |
-        docker build -t trading-journal-test .
+      run: docker build -t trading-journal-test .
+
+    - name: Deploy to GCP via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.GCP_HOST }}
+        username: ${{ secrets.GCP_USERNAME }}
+        key: ${{ secrets.GCP_SSH_KEY }}
+        script: |
+          cd ~/Trading_Journel
+          git pull origin main
+          sudo docker build -t trading-journal-app .
+          sudo docker rm -f journal-app || true
+          sudo docker run -d -p 8080:8080 -v $(pwd):/app --name journal-app --restart always trading-journal-app
