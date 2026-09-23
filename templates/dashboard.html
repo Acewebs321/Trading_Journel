@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <div class="card shadow-sm border-success">
+            <div class="card-body">
+                <h2 class="text-success mb-0">Current Balance: ${{ "%.2f"|format(current_balance) }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Setup Success Chart -->
+    <div class="col-lg-6 col-12">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white"><h5 class="mb-0">Setup Success Rate</h5></div>
+            <div class="card-body">
+                <canvas id="setupChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Balance Over Time Chart -->
+    <div class="col-lg-6 col-12">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white"><h5 class="mb-0">Account Growth</h5></div>
+            <div class="card-body">
+                <canvas id="balanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Setup Chart
+    new Chart(document.getElementById('setupChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ setup_labels | safe }},
+            datasets: [
+                { label: 'Wins', data: {{ setup_wins | safe }}, backgroundColor: '#198754' },
+                { label: 'Losses', data: {{ setup_losses | safe }}, backgroundColor: '#dc3545' }
+            ]
+        }
+    });
+
+    // 2. Balance Chart
+    new Chart(document.getElementById('balanceChart'), {
+        type: 'line',
+        data: {
+            labels: {{ chart_dates | safe }},
+            datasets: [{
+                label: 'Balance ($)',
+                data: {{ chart_balances | safe }},
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                fill: true,
+                tension: 0.2
+            }]
+        }
+    });
+</script>
+{% endblock %}
