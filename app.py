@@ -59,14 +59,15 @@ def add_trade():
     trade_id = str(uuid.uuid4())
     new_trade = {
         'id': trade_id,
-        'date': request.form['date'],
-        'entry_on': request.form['entry_on'],
-        'fvg_target': request.form['fvg_target'],
-        'pair': request.form['pair'],
-        'rr': request.form['rr'],
-        'trend_1h': request.form['trend_1h'],
-        'trend_3m': request.form['trend_3m'],
-        'direction': request.form['direction'],
+        # Use .get() for every field to prevent 400 Bad Request crashes
+        'date': request.form.get('date', ''),
+        'entry_on': request.form.get('entry_on', ''),
+        'fvg_target': request.form.get('fvg_target', ''),
+        'pair': request.form.get('pair', ''),
+        'rr': request.form.get('rr', ''),
+        'trend_1h': request.form.get('trend_1h', ''),
+        'trend_3m': request.form.get('trend_3m', ''),
+        'direction': request.form.get('direction', ''),
         'entry': request.form.get('entry', ''),
         'target': request.form.get('target', ''),
         'exit': request.form.get('exit', ''),
@@ -111,28 +112,27 @@ def edit_trade(trade_id):
         idx = df.index[df['ID'] == trade_id].tolist()
         if idx:
             i = idx[0]
-            df.at[i, 'Date'] = request.form['date']
-            df.at[i, 'Entry On'] = request.form['entry_on']
-            df.at[i, 'Targeted FVG'] = request.form['fvg_target']
-            df.at[i, 'Pair'] = request.form['pair']
-            df.at[i, 'RR'] = request.form['rr']
-            df.at[i, '1H Trend'] = request.form['trend_1h']
-            df.at[i, '3M Trend'] = request.form['trend_3m']
-            df.at[i, 'Direction'] = request.form['direction']
+            # Apply .get() to the edit fields as well
+            df.at[i, 'Date'] = request.form.get('date', '')
+            df.at[i, 'Entry On'] = request.form.get('entry_on', '')
+            df.at[i, 'Targeted FVG'] = request.form.get('fvg_target', '')
+            df.at[i, 'Pair'] = request.form.get('pair', '')
+            df.at[i, 'RR'] = request.form.get('rr', '')
+            df.at[i, '1H Trend'] = request.form.get('trend_1h', '')
+            df.at[i, '3M Trend'] = request.form.get('trend_3m', '')
+            df.at[i, 'Direction'] = request.form.get('direction', '')
             df.at[i, 'Entry Price'] = request.form.get('entry', '')
             df.at[i, 'Target Price'] = request.form.get('target', '')
             df.at[i, 'Exit Price'] = request.form.get('exit', '')
             df.at[i, 'Profit/Loss'] = request.form.get('pnl', 0)
             df.at[i, 'Notes'] = request.form.get('notes', '')
             
-            # Drop the calculated 'Balance' column before saving so it recalculates cleanly next time
             if 'Balance' in df.columns:
                 df = df.drop(columns=['Balance'])
             
             df.to_csv(CSV_FILE, index=False)
         return redirect(url_for('index'))
 
-    # Render the edit page if it's a GET request
     trade = df[df['ID'] == trade_id].to_dict('records')
     if not trade:
         return redirect(url_for('index'))
