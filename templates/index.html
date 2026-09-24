@@ -114,8 +114,13 @@
                 </td>
                 <td class="text-muted small">{{ trade['Notes'] }}</td>
                 <td>
+                <div class="d-flex gap-2">
                     <a href="/edit/{{ trade['ID'] }}" class="btn btn-sm btn-warning fw-bold text-dark">Edit</a>
-                </td>
+                    <form action="/delete/{{ trade['ID'] }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this trade?');">
+                        <button type="submit" class="btn btn-sm btn-danger fw-bold">Delete</button>
+                    </form>
+                </div>
+            </td>
             </tr>
             {% endfor %}
         </tbody>

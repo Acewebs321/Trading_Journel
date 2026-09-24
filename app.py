@@ -144,5 +144,19 @@ def edit_trade(trade_id):
     clean_trade = {k: ('' if pd.isna(v) else v) for k, v in trade[0].items()}
     return render_template('edit.html', trade=clean_trade)
 
+@app.route('/delete/<trade_id>', methods=['POST'])
+def delete_trade(trade_id):
+    df = get_trade_data()
+    if not df.empty:
+        # Keep only the rows that do NOT match the deleted ID
+        df = df[df['ID'] != trade_id]
+        
+        # Drop the calculated 'Balance' column before saving
+        if 'Balance' in df.columns:
+            df = df.drop(columns=['Balance'])
+            
+        df.to_csv(CSV_FILE, index=False)
+    return redirect(url_for('index'))
+
 if __name__ == '__main__':
     app.run(debug=True)
