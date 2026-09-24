@@ -2,28 +2,100 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-lg-12">
-        <div class="card shadow-sm">
+        <div class="card shadow-sm border-warning">
             <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">Edit Trade</h5>
+                <h5 class="mb-0 fw-bold">Edit Trade</h5>
             </div>
             <div class="card-body">
                 <form action="/edit/{{ trade['ID'] }}" method="POST">
                     <div class="row g-3">
+                        <div class="col-md-3 col-6"><label>Date</label><input type="date" name="date" class="form-control" value="{{ trade['Date'] }}" required></div>
+                        
                         <div class="col-md-3 col-6">
-                            <label>Date</label>
-                            <input type="date" name="date" class="form-control" value="{{ trade['Date'] }}" required>
+                            <label>Entry On</label>
+                            <select name="entry_on" id="entry_on" class="form-select" required>
+                                <option value="FVG">FVG</option>
+                                <option value="RESISTANCE">RESISTANCE</option>
+                                <option value="SUPPORT">SUPPORT</option>
+                                <option value="LIQUIDITY">LIQUIDITY</option>
+                                <option value="FIB SUPPORT">FIB SUPPORT</option>
+                                <option value="FIB RESISTANCE">FIB RESISTANCE</option>
+                                <option value="DEMAND ZONE">DEMAND ZONE</option>
+                                <option value="PREVIOUS HIGH">PREVIOUS HIGH</option>
+                                <option value="PREVIOUS LOW">PREVIOUS LOW</option>
+                            </select>
                         </div>
+
                         <div class="col-md-3 col-6">
-                            <label>Profit/Loss ($)</label>
-                            <input type="number" step="0.01" name="pnl" class="form-control" value="{{ trade['Profit/Loss'] }}" required>
+                            <label>Targeted to FVG?</label>
+                            <select name="fvg_target" id="fvg_target" class="form-select" required>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
                         </div>
-                        <!-- Recreate your other form fields here, injecting value="{{ trade['Column Name'] }}" -->
+
+                        <div class="col-md-3 col-6">
+                            <label>Pair</label>
+                            <select name="pair" id="pair" class="form-select" required>
+                                <option value="EURJPY">EURJPY</option>
+                                <option value="GBPJPY">GBPJPY</option>
+                                <option value="XAUUSD">XAUUSD</option>
+                                <option value="EURUSD">EURUSD</option>
+                                <option value="GBPUSD">GBPUSD</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 col-6"><label>Risk:Reward (RR)</label><input type="text" name="rr" class="form-control" value="{{ trade['RR'] }}" required></div>
+
+                        <div class="col-md-3 col-6">
+                            <label>1Hr Trend</label>
+                            <select name="trend_1h" id="trend_1h" class="form-select" required>
+                                <option value="BULLISH">BULLISH</option>
+                                <option value="SHORT">SHORT</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 col-6">
+                            <label>3min Trend</label>
+                            <select name="trend_3m" id="trend_3m" class="form-select" required>
+                                <option value="BULLISH">BULLISH</option>
+                                <option value="SHORT">SHORT</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 col-6">
+                            <label>Direction</label>
+                            <select name="direction" id="direction" class="form-select" required>
+                                <option value="LONG">LONG</option>
+                                <option value="SHORT">SHORT</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 col-6"><label>Entry Price</label><input type="number" step="0.00001" name="entry" class="form-control" value="{{ trade['Entry Price'] }}"></div>
+                        <div class="col-md-4 col-6"><label>Target Price</label><input type="number" step="0.00001" name="target" class="form-control" value="{{ trade['Target Price'] }}"></div>
+                        <div class="col-md-4 col-6"><label>Exit Price</label><input type="number" step="0.00001" name="exit" class="form-control" value="{{ trade['Exit Price'] }}"></div>
+                        
+                        <div class="col-md-4 col-12"><label>Profit/Loss ($)</label><input type="number" step="0.01" name="pnl" class="form-control" value="{{ trade['Profit/Loss'] }}" required></div>
+                        <div class="col-md-8 col-12"><label>Extra Notes</label><input type="text" name="notes" class="form-control" value="{{ trade['Notes'] }}"></div>
                     </div>
-                    <button type="submit" class="btn btn-warning mt-4 w-100 fw-bold">Update Trade</button>
-                    <a href="/" class="btn btn-secondary mt-2 w-100">Cancel</a>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-warning fw-bold w-100 mb-2">Update Trade</button>
+                        <a href="/" class="btn btn-secondary w-100">Cancel</a>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Automatically pre-select the saved dropdown options based on the IDs
+    document.getElementById('entry_on').value = "{{ trade['Entry On'] }}";
+    document.getElementById('fvg_target').value = "{{ trade['Targeted FVG'] }}";
+    document.getElementById('pair').value = "{{ trade['Pair'] }}";
+    document.getElementById('trend_1h').value = "{{ trade['1H Trend'] }}";
+    document.getElementById('trend_3m').value = "{{ trade['3M Trend'] }}";
+    document.getElementById('direction').value = "{{ trade['Direction'] }}";
+</script>
 {% endblock %}

@@ -112,19 +112,22 @@ def edit_trade(trade_id):
         idx = df.index[df['ID'] == trade_id].tolist()
         if idx:
             i = idx[0]
-            # Apply .get() to the edit fields as well
-            df.at[i, 'Date'] = request.form.get('date', '')
-            df.at[i, 'Entry On'] = request.form.get('entry_on', '')
-            df.at[i, 'Targeted FVG'] = request.form.get('fvg_target', '')
-            df.at[i, 'Pair'] = request.form.get('pair', '')
-            df.at[i, 'RR'] = request.form.get('rr', '')
-            df.at[i, '1H Trend'] = request.form.get('trend_1h', '')
-            df.at[i, '3M Trend'] = request.form.get('trend_3m', '')
-            df.at[i, 'Direction'] = request.form.get('direction', '')
-            df.at[i, 'Entry Price'] = request.form.get('entry', '')
-            df.at[i, 'Target Price'] = request.form.get('target', '')
-            df.at[i, 'Exit Price'] = request.form.get('exit', '')
-            df.at[i, 'Profit/Loss'] = request.form.get('pnl', 0)
+            
+            # If the form field is empty (''), fallback to the existing data
+            df.at[i, 'Date'] = request.form.get('date') or df.at[i, 'Date']
+            df.at[i, 'Entry On'] = request.form.get('entry_on') or df.at[i, 'Entry On']
+            df.at[i, 'Targeted FVG'] = request.form.get('fvg_target') or df.at[i, 'Targeted FVG']
+            df.at[i, 'Pair'] = request.form.get('pair') or df.at[i, 'Pair']
+            df.at[i, 'RR'] = request.form.get('rr') or df.at[i, 'RR']
+            df.at[i, '1H Trend'] = request.form.get('trend_1h') or df.at[i, '1H Trend']
+            df.at[i, '3M Trend'] = request.form.get('trend_3m') or df.at[i, '3M Trend']
+            df.at[i, 'Direction'] = request.form.get('direction') or df.at[i, 'Direction']
+            df.at[i, 'Entry Price'] = request.form.get('entry') or df.at[i, 'Entry Price']
+            df.at[i, 'Target Price'] = request.form.get('target') or df.at[i, 'Target Price']
+            df.at[i, 'Exit Price'] = request.form.get('exit') or df.at[i, 'Exit Price']
+            df.at[i, 'Profit/Loss'] = request.form.get('pnl') or df.at[i, 'Profit/Loss']
+            
+            # Notes can intentionally be empty, so we handle it differently
             df.at[i, 'Notes'] = request.form.get('notes', '')
             
             if 'Balance' in df.columns:
@@ -137,7 +140,9 @@ def edit_trade(trade_id):
     if not trade:
         return redirect(url_for('index'))
         
-    return render_template('edit.html', trade=trade[0])
+    # Replace NaN values in the dictionary with empty strings so the HTML doesn't print "nan"
+    clean_trade = {k: ('' if pd.isna(v) else v) for k, v in trade[0].items()}
+    return render_template('edit.html', trade=clean_trade)
 
 if __name__ == '__main__':
     app.run(debug=True)
