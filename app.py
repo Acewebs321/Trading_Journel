@@ -7,7 +7,7 @@ import uuid
 app = Flask(__name__)
 CSV_FILE = 'TRADING_JOURNELS_v4.csv'
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwI289q3hpAnXO5GRPeNOfZbMycgZmFmMdluHUo0vWBNXHjE8L-EO6UYgbtdyoLF3yA/exec"
-STARTING_BALANCE = 5021.00
+STARTING_BALANCE = 5006
 
 def get_trade_data():
     if os.path.exists(CSV_FILE):
