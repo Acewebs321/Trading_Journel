@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Edit Trade</h5>
+            </div>
+            <div class="card-body">
+                <form action="/edit/{{ trade['ID'] }}" method="POST">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <label>Date</label>
+                            <input type="date" name="date" class="form-control" value="{{ trade['Date'] }}" required>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label>Profit/Loss ($)</label>
+                            <input type="number" step="0.01" name="pnl" class="form-control" value="{{ trade['Profit/Loss'] }}" required>
+                        </div>
+                        <!-- Recreate your other form fields here, injecting value="{{ trade['Column Name'] }}" -->
+                    </div>
+                    <button type="submit" class="btn btn-warning mt-4 w-100 fw-bold">Update Trade</button>
+                    <a href="/" class="btn btn-secondary mt-2 w-100">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

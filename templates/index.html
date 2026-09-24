@@ -113,6 +113,9 @@
                     ${{ trade['Profit/Loss'] }}
                 </td>
                 <td class="text-muted small">{{ trade['Notes'] }}</td>
+                <td>
+                    <a href="/edit/{{ trade['ID'] }}" class="btn btn-sm btn-warning fw-bold text-dark">Edit</a>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
