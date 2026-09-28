@@ -35,22 +35,50 @@ def dashboard():
     if not df.empty:
         current_balance = df['Balance'].iloc[-1]
         
+        # 1. Overall Success Rate & Average P/L
         df['Result'] = df['Profit/Loss'].apply(lambda x: 'Win' if x > 0 else 'Loss')
-        setup_stats = df.groupby(['Entry On', 'Result']).size().unstack(fill_value=0).reset_index()
+        wins = len(df[df['Profit/Loss'] > 0])
+        success_rate = (wins / len(df)) * 100 if len(df) > 0 else 0
+        avg_pnl = df['Profit/Loss'].mean()
         
+        # 2. Weekly and Monthly Win/Loss Totals
+        df['Date'] = pd.to_datetime(df['Date'])
+        df['YearMonth'] = df['Date'].dt.to_period('M').astype(str)
+        df['YearWeek'] = df['Date'].dt.to_period('W').astype(str)
+        
+        monthly_data = df.groupby('YearMonth')['Profit/Loss'].agg(
+            Total_Win=lambda x: x[x > 0].sum(),
+            Total_Loss=lambda x: x[x < 0].sum()
+        ).reset_index().to_dict('records')
+        
+        weekly_data = df.groupby('YearWeek')['Profit/Loss'].agg(
+            Total_Win=lambda x: x[x > 0].sum(),
+            Total_Loss=lambda x: x[x < 0].sum()
+        ).reset_index().to_dict('records')
+
+        # 3. Existing Setup & Chart Data
+        setup_stats = df.groupby(['Entry On', 'Result']).size().unstack(fill_value=0).reset_index()
         setup_labels = setup_stats['Entry On'].tolist() if 'Entry On' in setup_stats else []
         setup_wins = setup_stats['Win'].tolist() if 'Win' in setup_stats else []
         setup_losses = setup_stats['Loss'].tolist() if 'Loss' in setup_stats else []
         
-        df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
+        # Convert date back to string format for Chart.js
+        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
         chart_dates = df['Date'].tolist()
         chart_balances = df['Balance'].tolist()
     else:
         current_balance = STARTING_BALANCE
+        success_rate = 0
+        avg_pnl = 0
+        weekly_data, monthly_data = [], []
         setup_labels, setup_wins, setup_losses, chart_dates, chart_balances = [], [], [], [], []
 
     return render_template('dashboard.html', 
                            current_balance=current_balance,
+                           success_rate=success_rate,
+                           avg_pnl=avg_pnl,
+                           weekly_data=weekly_data,
+                           monthly_data=monthly_data,
                            setup_labels=setup_labels, setup_wins=setup_wins, setup_losses=setup_losses,
                            chart_dates=chart_dates, chart_balances=chart_balances)
 

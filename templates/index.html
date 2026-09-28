@@ -120,7 +120,7 @@
                 <td class="{% if trade['Profit/Loss']|float >= 0 %}text-success{% else %}text-danger{% endif %} fw-bold">
                     ${{ trade['Profit/Loss'] }}
                 </td>
-                <td class="text-muted small">{{ trade['Notes'] }}</td>
+                <td class="text-muted small wrap">{{ trade['Notes'] }}</td>
                 <td>
                 <div class="d-flex gap-2">
                     <a href="/edit/{{ trade['ID'] }}" class="btn btn-sm btn-warning fw-bold text-dark">Edit</a>

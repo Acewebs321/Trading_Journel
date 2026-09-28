@@ -1,17 +1,91 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12 text-center">
-        <div class="card shadow-sm border-success">
-            <div class="card-body">
-                <h2 class="text-success mb-0">Current Balance: ${{ "%.2f"|format(current_balance) }}</h2>
+
+<!-- Top Metrics Row -->
+<div class="row mb-4 g-3">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-success h-100">
+            <div class="card-body text-center">
+                <h6 class="text-muted fw-bold text-uppercase">Current Balance</h6>
+                <h2 class="text-success mb-0">${{ "%.2f"|format(current_balance) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-primary h-100">
+            <div class="card-body text-center">
+                <h6 class="text-muted fw-bold text-uppercase">Success Rate</h6>
+                <h2 class="text-primary mb-0">{{ "%.1f"|format(success_rate) }}%</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-info h-100">
+            <div class="card-body text-center">
+                <h6 class="text-muted fw-bold text-uppercase">Avg P/L per Trade</h6>
+                <h2 class="text-info mb-0">${{ "%.2f"|format(avg_pnl) }}</h2>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
-    <!-- Setup Success Chart -->
+<!-- Weekly and Monthly Performance Tables -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6 col-12">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white"><h5 class="mb-0">Weekly Performance</h5></div>
+            <div class="card-body p-0">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Week</th>
+                            <th class="text-success">Total Won</th>
+                            <th class="text-danger">Total Lost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for w in weekly_data %}
+                        <tr>
+                            <td>{{ w.YearWeek }}</td>
+                            <td class="text-success fw-bold">${{ "%.2f"|format(w.Total_Win) }}</td>
+                            <td class="text-danger fw-bold">${{ "%.2f"|format(w.Total_Loss) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 col-12">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white"><h5 class="mb-0">Monthly Performance</h5></div>
+            <div class="card-body p-0">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Month</th>
+                            <th class="text-success">Total Won</th>
+                            <th class="text-danger">Total Lost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in monthly_data %}
+                        <tr>
+                            <td>{{ m.YearMonth }}</td>
+                            <td class="text-success fw-bold">${{ "%.2f"|format(m.Total_Win) }}</td>
+                            <td class="text-danger fw-bold">${{ "%.2f"|format(m.Total_Loss) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Existing Charts -->
+<div class="row g-4 mb-5">
     <div class="col-lg-6 col-12">
         <div class="card shadow-sm h-100">
             <div class="card-header bg-white"><h5 class="mb-0">Setup Success Rate</h5></div>
@@ -21,7 +95,6 @@
         </div>
     </div>
     
-    <!-- Balance Over Time Chart -->
     <div class="col-lg-6 col-12">
         <div class="card shadow-sm h-100">
             <div class="card-header bg-white"><h5 class="mb-0">Account Growth</h5></div>
