@@ -51,7 +51,7 @@
                             <label>1Hr Trend</label>
                             <select name="trend_1h" id="trend_1h" class="form-select" required>
                                 <option value="BULLISH">BULLISH</option>
-                                <option value="SHORT">SHORT</option>
+                                <option value="BEARISH">BEARISH</option>
                             </select>
                         </div>
 
@@ -59,7 +59,7 @@
                             <label>3min Trend</label>
                             <select name="trend_3m" id="trend_3m" class="form-select" required>
                                 <option value="BULLISH">BULLISH</option>
-                                <option value="SHORT">SHORT</option>
+                                <option value="BEARISH">BEARISH</option>
                             </select>
                         </div>
 
@@ -71,9 +71,9 @@
                             </select>
                         </div>
                         
-                        <div class="col-md-4 col-6"><label>Entry Price</label><input type="number" step="0.00001" name="entry" class="form-control" value="{{ trade['Entry Price'] }}"></div>
+                        <!-- <div class="col-md-4 col-6"><label>Entry Price</label><input type="number" step="0.00001" name="entry" class="form-control" value="{{ trade['Entry Price'] }}"></div>
                         <div class="col-md-4 col-6"><label>Target Price</label><input type="number" step="0.00001" name="target" class="form-control" value="{{ trade['Target Price'] }}"></div>
-                        <div class="col-md-4 col-6"><label>Exit Price</label><input type="number" step="0.00001" name="exit" class="form-control" value="{{ trade['Exit Price'] }}"></div>
+                        <div class="col-md-4 col-6"><label>Exit Price</label><input type="number" step="0.00001" name="exit" class="form-control" value="{{ trade['Exit Price'] }}"></div> -->
                         
                         <div class="col-md-4 col-12"><label>Profit/Loss ($)</label><input type="number" step="0.01" name="pnl" class="form-control" value="{{ trade['Profit/Loss'] }}" required></div>
                         <div class="col-md-8 col-12"><label>Extra Notes</label><input type="text" name="notes" class="form-control" value="{{ trade['Notes'] }}"></div>

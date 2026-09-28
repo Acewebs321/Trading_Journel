@@ -68,9 +68,9 @@ def add_trade():
         'trend_1h': request.form.get('trend_1h', ''),
         'trend_3m': request.form.get('trend_3m', ''),
         'direction': request.form.get('direction', ''),
-        'entry': request.form.get('entry', ''),
-        'target': request.form.get('target', ''),
-        'exit': request.form.get('exit', ''),
+        # 'entry': request.form.get('entry', ''),
+        # 'target': request.form.get('target', ''),
+        # 'exit': request.form.get('exit', ''),
         'pnl': request.form.get('pnl', 0),
         'notes': request.form.get('notes', '')
     }
@@ -90,9 +90,9 @@ def add_trade():
         '1H Trend': new_trade['trend_1h'], 
         '3M Trend': new_trade['trend_3m'], 
         'Direction': new_trade['direction'],
-        'Entry Price': new_trade['entry'], 
-        'Target Price': new_trade['target'], 
-        'Exit Price': new_trade['exit'], 
+        # 'Entry Price': new_trade['entry'], 
+        # 'Target Price': new_trade['target'], 
+        # 'Exit Price': new_trade['exit'], 
         'Profit/Loss': new_trade['pnl'],
         'Notes': new_trade['notes']
     }
@@ -122,9 +122,9 @@ def edit_trade(trade_id):
             df.at[i, '1H Trend'] = request.form.get('trend_1h') or df.at[i, '1H Trend']
             df.at[i, '3M Trend'] = request.form.get('trend_3m') or df.at[i, '3M Trend']
             df.at[i, 'Direction'] = request.form.get('direction') or df.at[i, 'Direction']
-            df.at[i, 'Entry Price'] = request.form.get('entry') or df.at[i, 'Entry Price']
-            df.at[i, 'Target Price'] = request.form.get('target') or df.at[i, 'Target Price']
-            df.at[i, 'Exit Price'] = request.form.get('exit') or df.at[i, 'Exit Price']
+            # df.at[i, 'Entry Price'] = request.form.get('entry') or df.at[i, 'Entry Price']
+            # df.at[i, 'Target Price'] = request.form.get('target') or df.at[i, 'Target Price']
+            # df.at[i, 'Exit Price'] = request.form.get('exit') or df.at[i, 'Exit Price']
             df.at[i, 'Profit/Loss'] = request.form.get('pnl') or df.at[i, 'Profit/Loss']
             
             # Notes can intentionally be empty, so we handle it differently

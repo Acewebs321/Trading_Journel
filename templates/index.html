@@ -11,7 +11,21 @@
                     <div class="row g-3">
                         <div class="col-md-3 col-6"><label>Date</label><input type="date" name="date" class="form-control" required></div>
                         
+
                         <div class="col-md-3 col-6">
+                            <label>Pair</label>
+                            <select name="pair" class="form-select" required>
+                                <option value="EURJPY">EURJPY</option>
+                                <option value="GBPJPY">GBPJPY</option>
+                                <option value="XAUUSD">XAUUSD</option>
+                                <option value="EURUSD">EURUSD</option>
+                                <option value="GBPUSD">GBPUSD</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 col-6">
+
+                            
                             <label>Entry On</label>
                             <select name="entry_on" class="form-select" required>
                                 <option value="FVG">FVG</option>
@@ -35,16 +49,7 @@
                             </select>
                         </div>
 
-                        <div class="col-md-3 col-6">
-                            <label>Pair</label>
-                            <select name="pair" class="form-select" required>
-                                <option value="EURJPY">EURJPY</option>
-                                <option value="GBPJPY">GBPJPY</option>
-                                <option value="XAUUSD">XAUUSD</option>
-                                <option value="EURUSD">EURUSD</option>
-                                <option value="GBPUSD">GBPUSD</option>
-                            </select>
-                        </div>
+                       
 
                         <div class="col-md-3 col-6"><label>Risk:Reward (RR)</label><select name="rr" class="form-select" required>
                                 <option value="1:1">1:1</option>
@@ -78,9 +83,9 @@
                             </select>
                         </div>
                         
-                        <div class="col-md-4 col-6"><label>Entry Price</label><input type="number" step="0.00001" name="entry" class="form-control"></div>
+                        <!-- <div class="col-md-4 col-6"><label>Entry Price</label><input type="number" step="0.00001" name="entry" class="form-control"></div>
                         <div class="col-md-4 col-6"><label>Target Price</label><input type="number" step="0.00001" name="target" class="form-control"></div>
-                        <div class="col-md-4 col-6"><label>Exit Price</label><input type="number" step="0.00001" name="exit" class="form-control"></div>
+                        <div class="col-md-4 col-6"><label>Exit Price</label><input type="number" step="0.00001" name="exit" class="form-control"></div> -->
                         
                         <div class="col-md-4 col-12"><label>Profit/Loss ($)</label><input type="number" step="0.01" name="pnl" class="form-control" required></div>
                         <div class="col-md-8 col-12"><label>Extra Notes</label><input type="text" name="notes" class="form-control" placeholder="What went well/wrong?"></div>
@@ -104,11 +109,14 @@
             {% for trade in trades %}
             <tr>
                 <td>{{ trade['Date'] }}</td>
-                <td>{{ trade['Entry On'] }}</td>
                 <td><strong>{{ trade['Pair'] }}</strong></td>
-                <td>{{ trade['RR'] }}</td>
+                <td>{{ trade['Entry On'] }}</td>
+                
+                
                 <td>{{ trade['1H Trend'] }}</td>
+                <td>{{ trade['3M Trend'] }}</td>
                 <td>{{ trade['Direction'] }}</td>
+                <td>{{ trade['RR'] }}</td>
                 <td class="{% if trade['Profit/Loss']|float >= 0 %}text-success{% else %}text-danger{% endif %} fw-bold">
                     ${{ trade['Profit/Loss'] }}
                 </td>
