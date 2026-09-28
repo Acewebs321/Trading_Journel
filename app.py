@@ -18,8 +18,17 @@ def get_trade_data():
             df.insert(0, 'ID', [str(uuid.uuid4()) for _ in range(len(df))])
             df.to_csv(CSV_FILE, index=False)
 
+        # 1. Convert to proper datetime and sort oldest to newest
+        df['Date'] = pd.to_datetime(df['Date'])
+        df = df.sort_values(by='Date', ascending=True)
+
+        # 2. Calculate the Balance in perfect chronological order
         df['Profit/Loss'] = pd.to_numeric(df['Profit/Loss'], errors='coerce').fillna(0)
         df['Balance'] = STARTING_BALANCE + df['Profit/Loss'].cumsum()
+        
+        # 3. Convert Date back to string for clean HTML and JSON rendering
+        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
+        
         return df
     return pd.DataFrame()
 
