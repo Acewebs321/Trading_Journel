@@ -102,7 +102,7 @@
     <table class="table table-striped table-hover mb-0" style="min-width: 1000px;">
         <thead class="table-dark">
             <tr>
-                <th>Date</th><th>Pair</th><th>Entry On</th><th>fvg_target</th><th>1H Trend</th><th>3M Trend</th><th>Dir.</th><th>RR</th><th>P/L</th><th>Notes</th>
+                <th>Date</th><th>Pair</th><th>Entry On</th><th>Targeted FVG</th><th>1H Trend</th><th>3M Trend</th><th>Dir.</th><th>RR</th><th>P/L</th><th>Notes</th>
             </tr>
         </thead>
         <tbody>
@@ -111,7 +111,7 @@
                 <td>{{ trade['Date'] }}</td>
                 <td><strong>{{ trade['Pair'] }}</strong></td>
                 <td>{{ trade['Entry On'] }}</td>
-                <td>{{ trade['fvg_target'] }}</td>
+                <td>{{ trade['Targeted FVG'] }}</td>
                 <td>{{ trade['1H Trend'] }}</td>
                 <td>{{ trade['3M Trend'] }}</td>
                 <td>{{ trade['Direction'] }}</td>
