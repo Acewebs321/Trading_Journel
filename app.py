@@ -8,35 +8,54 @@ app = Flask(__name__)
 CSV_FILE = 'TRADING_JOURNELS_v4.csv'
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwI289q3hpAnXO5GRPeNOfZbMycgZmFmMdluHUo0vWBNXHjE8L-EO6UYgbtdyoLF3yA/exec"
 STARTING_BALANCE = 5006
+# 1. Add this function near the top of app.py to dynamically check your starting balance
+# 1. Add these helper functions at the top of app.py (Make sure STARTING_BALANCE = 5006 is deleted)
+def get_starting_balance():
+    if os.path.exists('balance.txt'):
+        with open('balance.txt', 'r') as f:
+            try:
+                return float(f.read().strip())
+            except ValueError:
+                return 5006.00
+    return 5006.00
 
+@app.route('/update_balance', methods=['POST'])
+def update_balance():
+    new_balance = request.form.get('new_balance')
+    if new_balance:
+        with open('balance.txt', 'w') as f:
+            f.write(str(new_balance))
+    return redirect(request.referrer)
+
+# 2. Your Corrected Functions
 def get_trade_data():
     if os.path.exists(CSV_FILE):
         df = pd.read_csv(CSV_FILE)
         
-        # Retroactively add unique IDs to old trades if missing
         if 'ID' not in df.columns:
             df.insert(0, 'ID', [str(uuid.uuid4()) for _ in range(len(df))])
             df.to_csv(CSV_FILE, index=False)
 
-        # 1. Convert to proper datetime and sort oldest to newest
         df['Date'] = pd.to_datetime(df['Date'])
         df = df.sort_values(by='Date', ascending=True)
 
-        # 2. Calculate the Balance in perfect chronological order
         df['Profit/Loss'] = pd.to_numeric(df['Profit/Loss'], errors='coerce').fillna(0)
-        df['Balance'] = STARTING_BALANCE + df['Profit/Loss'].cumsum()
         
-        # 3. Convert Date back to string for clean HTML and JSON rendering
+        # Uses the dynamic function
+        df['Balance'] = get_starting_balance() + df['Profit/Loss'].cumsum()
+        
         df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
         
         return df
     return pd.DataFrame()
+
 
 @app.route('/')
 def index():
     df = get_trade_data()
     trades = df.to_dict('records') if not df.empty else []
     return render_template('index.html', trades=trades[::-1])
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -76,7 +95,8 @@ def dashboard():
         chart_dates = df['Date'].tolist()
         chart_balances = df['Balance'].tolist()
     else:
-        current_balance = STARTING_BALANCE
+        # CORRECTED FALLBACK LINE:
+        current_balance = get_starting_balance()
         success_rate = 0
         avg_pnl = 0
         weekly_data, monthly_data = [], []
@@ -90,6 +110,7 @@ def dashboard():
                            monthly_data=monthly_data,
                            setup_labels=setup_labels, setup_wins=setup_wins, setup_losses=setup_losses,
                            chart_dates=chart_dates, chart_balances=chart_balances)
+
 
 @app.route('/add', methods=['POST'])
 def add_trade():
