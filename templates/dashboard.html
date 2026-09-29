@@ -3,14 +3,25 @@
 
 <!-- Top Metrics Row -->
 <div class="row mb-4 g-3">
-    <div class="col-md-4">
-        <div class="card shadow-sm border-success h-100">
-            <div class="card-body text-center">
-                <h6 class="text-muted fw-bold text-uppercase">Current Balance</h6>
-                <h2 class="text-success mb-0">${{ "%.2f"|format(current_balance) }}</h2>
+    <div class="row mb-4">
+    <div class="col-12 text-center">
+        <div class="card shadow-sm border-success">
+            <div class="card-body">
+                <h2 class="text-success mb-0 d-flex justify-content-center align-items-center">
+                    Current Balance: ${{ "%.2f"|format(current_balance) }}
+                    <!-- The new Edit button -->
+                    <button class="btn btn-sm btn-outline-success ms-3" onclick="document.getElementById('balanceForm').classList.toggle('d-none')">Edit Starting Capital</button>
+                </h2>
+                
+                <!-- The hidden input form -->
+                <form id="balanceForm" action="/update_balance" method="POST" class="d-none mt-3 d-flex justify-content-center gap-2">
+                    <input type="number" step="0.01" name="new_balance" class="form-control w-25" placeholder="Enter new base balance" required>
+                    <button type="submit" class="btn btn-success fw-bold">Save</button>
+                </form>
             </div>
         </div>
     </div>
+</div>
     <div class="col-md-4">
         <div class="card shadow-sm border-primary h-100">
             <div class="card-body text-center">
