@@ -23,9 +23,15 @@ jobs:
         key: ${{ secrets.GCP_SSH_KEY }}
         script: |
           cd ~/Trading_Journel
-          sudo docker system prune -af
           git pull origin main
+          
+          # 1. Build the image FIRST to utilize the cache
           sudo docker build -t trading-journal-app .
+          
+          # 2. Swap the containers
           sudo docker rm -f journal-app || true
           sudo docker run -d -p 8080:8080 -v $(pwd):/app --name journal-app --restart always trading-journal-app
+          
+          # 3. Clean up the disk space AFTER the deployment is finished
+          sudo docker system prune -af
 
