@@ -4,12 +4,87 @@ import requests
 import os
 import uuid
 
+import yfinance as yf
+import threading
+import time
 app = Flask(__name__)
 CSV_FILE = 'TRADING_JOURNELS_v4.csv'
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwI289q3hpAnXO5GRPeNOfZbMycgZmFmMdluHUo0vWBNXHjE8L-EO6UYgbtdyoLF3yA/exec"
 STARTING_BALANCE = 5006
 # 1. Add this function near the top of app.py to dynamically check your starting balance
 # 1. Add these helper functions at the top of app.py (Make sure STARTING_BALANCE = 5006 is deleted)
+# ===================================================/=
+
+
+# --- Telegram Settings ---
+TELEGRAM_TOKEN = "8641583463:AAGrsLR0Xmf-fOd3FXafjC8lbqUiqCasZGM"
+TELEGRAM_CHAT_ID = "1110417286"
+
+def send_telegram(msg):
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    try:
+        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": msg})
+    except Exception as e:
+        print(f"Telegram error: {e}")
+
+def run_fvg_scanner():
+    while True:
+        try:
+            # 1H Trend Confirmation
+            df_1h = yf.download("EURJPY=X", interval="1h", period="5d", progress=False)
+            if len(df_1h) < 50: 
+                time.sleep(180)
+                continue
+                
+            sma50_1h = df_1h['Close'].rolling(50).mean().iloc[-1].item()
+            current_1h_close = df_1h['Close'].iloc[-1].item()
+            trend_bullish = current_1h_close > sma50_1h
+            
+            if not trend_bullish:
+                time.sleep(180)
+                continue
+
+            # 3m FVG and SMA Check (Resampled from 1m)
+            df_1m = yf.download("EURJPY=X", interval="1m", period="1d", progress=False)
+            df_3m = df_1m.resample('3min').agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last'}).dropna()
+            df_3m['SMA20'] = df_3m['Close'].rolling(20).mean()
+            
+            c1, c2, c3, current = df_3m.iloc[-4], df_3m.iloc[-3], df_3m.iloc[-2], df_3m.iloc[-1]
+            
+            bearish_fvg = c1['Low'].item() > c3['High'].item()
+            two_candles_past_sma = (c3['Close'].item() < c3['SMA20'].item()) and (current['Close'].item() < current['SMA20'].item())
+            
+            if bearish_fvg and two_candles_past_sma:
+                price = round(current['Close'].item(), 3)
+                
+                # 1. Send Telegram Alert to Phone
+                send_telegram(f"🚨 EURJPY Alert: 1H Bullish Trend + 3m Bearish FVG + Below 20 SMA! Price: {price}")
+                
+                # Sleep for 1 hour to prevent duplicate alerts for the same setup
+                time.sleep(3600)
+                
+        except Exception as e:
+            print(f"Scanner error: {e}")
+            
+        time.sleep(180) # Check every 3 minutes
+
+# Start the background scanner thread only once
+if not os.environ.get("WERKZEUG_RUN_MAIN") and not os.environ.get("GUNICORN_WORKER"):
+    os.environ["GUNICORN_WORKER"] = "true"
+    scanner_thread = threading.Thread(target=run_fvg_scanner, daemon=True)
+    scanner_thread.start()
+
+
+
+
+
+
+
+
+
+
+
+# ===========================================================
 def get_starting_balance():
     if os.path.exists('balance.txt'):
         with open('balance.txt', 'r') as f:
