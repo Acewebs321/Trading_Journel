@@ -15,96 +15,189 @@ STARTING_BALANCE = 5006
 # 1. Add these helper functions at the top of app.py (Make sure STARTING_BALANCE = 5006 is deleted)
 # ===================================================/=
 
+SYMBOL = "EURJPY=X"
+SCAN_INTERVAL = 180       # Check every 3 minutes
+ALERT_COOLDOWN = 1800 
 
 # --- Telegram Settings ---
-TELEGRAM_TOKEN = "8641583463:AAGrsLR0Xmf-fOd3FXafjC8lbqUiqCasZGM"
-TELEGRAM_CHAT_ID = "1110417286"
+TELEGRAM_TOKEN = os.getenv("8641583463:AAGrsLR0Xmf-fOd3FXafjC8lbqUiqCasZGM")
+TELEGRAM_CHAT_ID = os.getenv("1110417286")
+
+
+last_alert = {
+    "long": 0,
+    "short": 0
+}
 
 def send_telegram(msg):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        print("Telegram credentials are missing.")
+        return
+
+    url = (
+        f"https://api.telegram.org/bot"
+        f"{TELEGRAM_TOKEN}/sendMessage"
+    )
+
     try:
-        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": msg})
+        response = requests.post(
+            url,
+            json={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "text": msg
+            },
+            timeout=10
+        )
+        response.raise_for_status()
+
+        if not response.json().get("ok"):
+            print("Telegram rejected the message:", response.text)
+
     except Exception as e:
         print(f"Telegram error: {e}")
 
+
+def download_data(interval, period):
+    df = yf.download(
+        SYMBOL,
+        interval=interval,
+        period=period,
+        progress=False,
+        auto_adjust=False
+    )
+
+    if df.empty:
+        return pd.DataFrame()
+
+    # Handle Yahoo Finance MultiIndex columns
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+
+    df = df.loc[:, ~df.columns.duplicated()]
+    return df.dropna(subset=["Open", "High", "Low", "Close"])
+
+
 def run_fvg_scanner():
+    global last_alert
+
     while True:
         try:
-            # 1. Download 5-minute data for Trend Confirmation
-            df_5m = yf.download("EURJPY=X", interval="5m", period="2d", progress=False)
-            if df_5m.empty or len(df_5m) < 50:
-                time.sleep(180)
-                continue
-            
-            # Handle MultiIndex columns
-            if isinstance(df_5m.columns, pd.MultiIndex):
-                df_5m.columns = df_5m.columns.get_level_values(0)
-                
-            df_5m['SMA50'] = df_5m['Close'].rolling(50).mean()
-            current_5m = df_5m.iloc[-1]
-            
-            # Establish the 5-minute Trend
-            trend_5m_bullish = float(current_5m['Close']) > float(current_5m['SMA50'])
-            trend_5m_bearish = float(current_5m['Close']) < float(current_5m['SMA50'])
+            # 1. Determine the 5-minute trend
+            df_5m = download_data("5m", "2d")
 
-            # 2. Download 1-minute data and resample to 3-minute
-            df_1m = yf.download("EURJPY=X", interval="1m", period="1d", progress=False)
-            if df_1m.empty or len(df_1m) < 40:
-                time.sleep(180)
+            if len(df_5m) < 52:
+                print("Not enough 5-minute data.")
+                time.sleep(SCAN_INTERVAL)
                 continue
 
-            if isinstance(df_1m.columns, pd.MultiIndex):
-                df_1m.columns = df_1m.columns.get_level_values(0)
+            df_5m["SMA50"] = df_5m["Close"].rolling(50).mean()
 
-            df_3m = df_1m.resample('3min').agg({
-                'Open': 'first',
-                'High': 'max',
-                'Low': 'min',
-                'Close': 'last'
+            # Exclude the latest potentially incomplete candle
+            trend_candle = df_5m.iloc[-2]
+
+            bullish_trend = (
+                trend_candle["Close"] > trend_candle["SMA50"]
+            )
+            bearish_trend = (
+                trend_candle["Close"] < trend_candle["SMA50"]
+            )
+
+            # 2. Download 1-minute data and build 3-minute candles
+            df_1m = download_data("1m", "1d")
+
+            if len(df_1m) < 90:
+                print("Not enough 1-minute data.")
+                time.sleep(SCAN_INTERVAL)
+                continue
+
+            df_3m = df_1m.resample(
+                "3min",
+                label="left",
+                closed="left"
+            ).agg({
+                "Open": "first",
+                "High": "max",
+                "Low": "min",
+                "Close": "last"
             }).dropna()
 
+            # Exclude the most recent resampled interval,
+            # which may not yet be complete.
+            df_3m = df_3m.iloc[:-1].copy()
+
             if len(df_3m) < 25:
-                time.sleep(180)
+                time.sleep(SCAN_INTERVAL)
                 continue
 
-            # 3. Calculate 3m 20 SMA
-            df_3m['SMA20'] = df_3m['Close'].rolling(20).mean()
+            df_3m["SMA20"] = df_3m["Close"].rolling(20).mean()
 
-            # Isolate the last completed candles
-            c1 = df_3m.iloc[-4]
-            c2 = df_3m.iloc[-3]
-            c3 = df_3m.iloc[-2]
-            current_3m = df_3m.iloc[-1]
+            # Four completed candles:
+            # a, b, c form the FVG pattern using a and c;
+            # c and d are checked for the SMA condition.
+            a = df_3m.iloc[-4]
+            b = df_3m.iloc[-3]
+            c = df_3m.iloc[-2]
+            d = df_3m.iloc[-1]
 
-            current_price = round(float(current_3m['Close']), 3)
+            price = float(d["Close"])
 
-            # --- SETUP A: 5m Bullish Trend -> 3m Bearish Pullback ---
-            bearish_fvg = float(c1['Low']) > float(c3['High'])
-            two_candles_below_sma = (float(c3['Close']) < float(c3['SMA20'])) and (float(current_3m['Close']) < float(current_3m['SMA20']))
+            bearish_fvg = float(a["Low"]) > float(c["High"])
+            bullish_fvg = float(a["High"]) < float(c["Low"])
 
-            if trend_5m_bullish and bearish_fvg and two_candles_below_sma:
-                send_telegram(f"🚨 EURJPY Alert: Long Pullback Setup!\n• 5m Trend: Bullish\n• 3m Bearish FVG\n• 2+ Candles Below 3m 20 SMA\n• Price: {current_price}")
-                time.sleep(1800)  # Pause 30 mins after alert to prevent repeated spam
+            two_below_sma = (
+                c["Close"] < c["SMA20"]
+                and d["Close"] < d["SMA20"]
+            )
 
-            # --- SETUP B: 5m Bearish Trend -> 3m Bullish Pullback ---
-            bullish_fvg = float(c1['High']) < float(c3['Low'])
-            two_candles_above_sma = (float(c3['Close']) > float(c3['SMA20'])) and (float(current_3m['Close']) > float(current_3m['SMA20']))
+            two_above_sma = (
+                c["Close"] > c["SMA20"]
+                and d["Close"] > d["SMA20"]
+            )
 
-            if trend_5m_bearish and bullish_fvg and two_candles_above_sma:
-                send_telegram(f"🚨 EURJPY Alert: Short Pullback Setup!\n• 5m Trend: Bearish\n• 3m Bullish FVG\n• 2+ Candles Above 3m 20 SMA\n• Price: {current_price}")
-                time.sleep(1800)
+            now = time.time()
+
+            # 3. Bullish trend + bearish pullback = long setup
+            if (
+                bullish_trend
+                and bearish_fvg
+                and two_below_sma
+                and now - last_alert["long"] >= ALERT_COOLDOWN
+            ):
+                message = (
+                    "EURJPY — LONG PULLBACK SETUP\n"
+                    "5m Trend: Bullish\n"
+                    "3m FVG: Bearish\n"
+                    "3m SMA20: Two closes below\n"
+                    f"Price: {price:.3f}"
+                )
+
+                send_telegram(message)
+                last_alert["long"] = now
+                print(message)
+
+            # 4. Bearish trend + bullish pullback = short setup
+            if (
+                bearish_trend
+                and bullish_fvg
+                and two_above_sma
+                and now - last_alert["short"] >= ALERT_COOLDOWN
+            ):
+                message = (
+                    "EURJPY — SHORT PULLBACK SETUP\n"
+                    "5m Trend: Bearish\n"
+                    "3m FVG: Bullish\n"
+                    "3m SMA20: Two closes above\n"
+                    f"Price: {price:.3f}"
+                )
+
+                send_telegram(message)
+                last_alert["short"] = now
+                print(message)
 
         except Exception as e:
             print(f"Scanner error: {e}")
 
-        # Wait 3 minutes for next candle cycle
-        time.sleep(180)
-
-# Start background scanner thread safely
-if not os.environ.get("WERKZEUG_RUN_MAIN") and not os.environ.get("GUNICORN_WORKER"):
-    os.environ["GUNICORN_WORKER"] = "true"
-    scanner_thread = threading.Thread(target=run_fvg_scanner, daemon=True)
-    scanner_thread.start()
+        time.sleep(SCAN_INTERVAL)
 
 
 
