@@ -30,50 +30,70 @@ def send_telegram(msg):
 def run_fvg_scanner():
     while True:
         try:
-            # 1H Trend Confirmation
-            df_1h = yf.download("EURJPY=X", interval="1h", period="5d", progress=False)
-            if len(df_1h) < 50: 
-                time.sleep(180)
-                continue
-                
-            sma50_1h = df_1h['Close'].rolling(50).mean().iloc[-1].item()
-            current_1h_close = df_1h['Close'].iloc[-1].item()
-            trend_bullish = current_1h_close > sma50_1h
-            
-            if not trend_bullish:
+            # 1. Download 1-minute data for EURJPY
+            df_1m = yf.download("EURJPY=X", interval="1m", period="1d", progress=False)
+            if df_1m.empty or len(df_1m) < 40:
                 time.sleep(180)
                 continue
 
-            # 3m FVG and SMA Check (Resampled from 1m)
-            df_1m = yf.download("EURJPY=X", interval="1m", period="1d", progress=False)
-            df_3m = df_1m.resample('3min').agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last'}).dropna()
+            # Handle MultiIndex columns if returned by newer yfinance versions
+            if isinstance(df_1m.columns, pd.MultiIndex):
+                df_1m.columns = df_1m.columns.get_level_values(0)
+
+            # 2. Resample 1m data into 3m candles
+            df_3m = df_1m.resample('3min').agg({
+                'Open': 'first',
+                'High': 'max',
+                'Low': 'min',
+                'Close': 'last'
+            }).dropna()
+
+            if len(df_3m) < 25:
+                time.sleep(180)
+                continue
+
+            # 3. Calculate 20 SMA directly on 3m timeframe
             df_3m['SMA20'] = df_3m['Close'].rolling(20).mean()
-            
-            c1, c2, c3, current = df_3m.iloc[-4], df_3m.iloc[-3], df_3m.iloc[-2], df_3m.iloc[-1]
-            
-            bearish_fvg = c1['Low'].item() > c3['High'].item()
-            two_candles_past_sma = (c3['Close'].item() < c3['SMA20'].item()) and (current['Close'].item() < current['SMA20'].item())
-            
-            if bearish_fvg and two_candles_past_sma:
-                price = round(current['Close'].item(), 3)
-                
-                # 1. Send Telegram Alert to Phone
-                send_telegram(f"🚨 EURJPY Alert: 1H Bullish Trend + 3m Bearish FVG + Below 20 SMA! Price: {price}")
-                
-                # Sleep for 1 hour to prevent duplicate alerts for the same setup
-                time.sleep(3600)
-                
+
+            # Isolate the last completed candles for evaluation
+            c1 = df_3m.iloc[-4]
+            c2 = df_3m.iloc[-3]
+            c3 = df_3m.iloc[-2]
+            current = df_3m.iloc[-1]
+
+            current_price = round(float(current['Close']), 3)
+
+            # --- Check Bearish Scenario ---
+            # 1. Bearish FVG: Gap between Candle 1 Low and Candle 3 High
+            bearish_fvg = float(c1['Low']) > float(c3['High'])
+            # 2. More than one candle past (below) 20 SMA
+            two_candles_below_sma = (float(c3['Close']) < float(c3['SMA20'])) and (float(current['Close']) < float(current['SMA20']))
+
+            if bearish_fvg and two_candles_below_sma:
+                send_telegram(f"🚨 EURJPY Alert: Bearish Setup!\n• 3m Bearish FVG\n• 2+ Candles Below 20 SMA\n• Price: {current_price}")
+                time.sleep(1800)  # Pause 30 mins after alert to prevent repeated spam
+
+            # --- Check Bullish Scenario ---
+            # 1. Bullish FVG: Gap between Candle 1 High and Candle 3 Low
+            bullish_fvg = float(c1['High']) < float(c3['Low'])
+            # 2. More than one candle past (above) 20 SMA
+            two_candles_above_sma = (float(c3['Close']) > float(c3['SMA20'])) and (float(current['Close']) > float(current['SMA20']))
+
+            if bullish_fvg and two_candles_above_sma:
+                send_telegram(f"🚨 EURJPY Alert: Bullish Setup!\n• 3m Bullish FVG\n• 2+ Candles Above 20 SMA\n• Price: {current_price}")
+                time.sleep(1800)  # Pause 30 mins after alert to prevent repeated spam
+
         except Exception as e:
             print(f"Scanner error: {e}")
-            
-        time.sleep(180) # Check every 3 minutes
 
-# Start the background scanner thread only once
+        # Wait 3 minutes for next candle cycle
+        time.sleep(180)
+
+# Start background scanner thread safely
 if not os.environ.get("WERKZEUG_RUN_MAIN") and not os.environ.get("GUNICORN_WORKER"):
     os.environ["GUNICORN_WORKER"] = "true"
     scanner_thread = threading.Thread(target=run_fvg_scanner, daemon=True)
     scanner_thread.start()
-
 
 
 
