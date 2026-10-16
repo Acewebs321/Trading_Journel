@@ -81,7 +81,7 @@ def run_fvg_scanner():
 
             if bullish_fvg and two_candles_above_sma:
                 send_telegram(f"🚨 EURJPY Alert: Bullish Setup!\n• 3m Bullish FVG\n• 2+ Candles Above 20 SMA\n• Price: {current_price}")
-                time.sleep(1800)  # Pause 30 mins after alert to prevent repeated spam
+                time.sleep(500)  # Pause 30 mins after alert to prevent repeated spam
 
         except Exception as e:
             print(f"Scanner error: {e}")
