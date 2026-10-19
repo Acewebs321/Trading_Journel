@@ -490,10 +490,10 @@ def delete_trade(trade_id):
 
 
 # Start the background scanner thread only once
-if not os.environ.get("WERKZEUG_RUN_MAIN") and not os.environ.get("GUNICORN_WORKER"):
-    os.environ["GUNICORN_WORKER"] = "true"
-    scanner_thread = threading.Thread(target=run_fvg_scanner, daemon=True)
-    scanner_thread.start()    
+# if not os.environ.get("WERKZEUG_RUN_MAIN") and not os.environ.get("GUNICORN_WORKER"):
+#     os.environ["GUNICORN_WORKER"] = "true"
+#     scanner_thread = threading.Thread(target=run_fvg_scanner, daemon=True)
+#     scanner_thread.start()    
 
 if __name__ == '__main__':
     app.run(debug=True)
