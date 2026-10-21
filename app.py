@@ -4,7 +4,6 @@ import requests
 import os
 import uuid
 
-import yfinance as yf
 
 app = Flask(__name__)
 CSV_FILE = 'TRADING_JOURNELS_v4.csv'
