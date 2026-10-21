@@ -21,6 +21,7 @@ jobs:
         host: ${{ secrets.GCP_HOST }}
         username: ${{ secrets.GCP_USERNAME }}
         key: ${{ secrets.GCP_SSH_KEY }}
+        command_timeout: 30m
         script: |
           cd ~/Trading_Journel
           git pull origin main
@@ -34,4 +35,3 @@ jobs:
           
           # 3. Clean up the disk space AFTER the deployment is finished
           sudo docker system prune -af
-
